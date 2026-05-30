@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local dev workspace folders (logs, agent rules — never commit to GitHub)
+Utilidades/
+.agents/

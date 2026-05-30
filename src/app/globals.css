@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @source "./**/*.{ts,tsx}";
-@source "./admin/**/*.{ts,tsx}";
+
+
 
 
 @theme {
