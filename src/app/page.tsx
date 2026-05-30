@@ -1,22 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CaretRight, CheckCircle, CalendarPlus, Spinner, ShareNetwork, Check } from '@phosphor-icons/react';
 
 export default function Home() {
-  const router = useRouter();
-  const isCloud = process.env.NEXT_PUBLIC_RUNTIME_MODE === 'cloud' || 
-                  (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app'));
-
-
-  useEffect(() => {
-    if (!isCloud) {
-      router.replace('/admin');
-    }
-  }, [isCloud, router]);
-
   const [teams, setTeams] = useState<any[]>(() => [
     { id: '126536', name: 'Movistar KOI (LEC)', game: 'League of Legends', acronym: 'LEC' },
     { id: '126537', name: 'Movistar KOI (LVP)', game: 'League of Legends', acronym: 'LVP' },
@@ -31,7 +19,6 @@ export default function Home() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isCloud) return; // Bypassed dynamically in local mode
     const fetchTeams = async () => {
       try {
         const res = await fetch('/api/teams');
@@ -89,15 +76,6 @@ export default function Home() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-
-  if (!isCloud) {
-    return (
-      <main className="w-full min-h-[100dvh] flex flex-col items-center justify-center p-6 gap-4 font-sans bg-slate-950">
-        <Spinner className="animate-spin text-[#00FF85]" size={36} />
-        <span className="text-xs font-mono text-white/40">Redirigiendo al Panel Maestro...</span>
-      </main>
-    );
-  }
 
   return (
     <main className="w-full min-h-[100dvh] flex flex-col items-center px-4 py-24 md:py-40 font-sans">
