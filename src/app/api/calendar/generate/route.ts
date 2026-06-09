@@ -33,12 +33,48 @@ export async function POST(request: Request) {
       });
     }
 
-    // Build calendar name from team acronyms
+    // Diccionario de siglas de juegos
+    const gameAcronyms: Record<string, string> = {
+      'league of legends': 'LOL',
+      'counter-strike': 'CS2',
+      'valorant': 'VAL',
+      'teamfight tactics': 'TFT',
+      'pokemon': 'PKMN',
+      'rocket league': 'RL',
+      'ea sports fc': 'FC',
+      'call of duty': 'COD',
+      'rainbow six siege': 'R6',
+      'rainbow 6': 'R6'
+    };
+
+    // Build calendar name from game acronyms and suffixes
     const allDbTeams = await teamAdapter.findAll();
-    const activeAcronyms = allDbTeams
+    const acronymsRaw = allDbTeams
       .filter((t: any) => sortedIds.includes(t.id.toString()))
-      .map((t: any) => t.acronym || t.name.replace('Movistar KOI ', '').replace('KOI ', ''))
-      .join(' + ');
+      .map((t: any) => {
+        // 1. Obtener la sigla base del juego
+        const gameLower = (t.game || '').toLowerCase();
+        let baseAcronym = gameAcronyms[gameLower] || t.game || 'Unknown';
+
+        // 2. Si el equipo tiene una liga asignada dinámicamente, la priorizamos (ej: LEC, Superliga, TFT)
+        // ya que es mucho más específica y diferencial que simplemente "LOL"
+        if (t.league) {
+          return t.league;
+        }
+
+        // 3. Fallback a la extracción manual de sufijos si no hay liga (legacy)
+        const nameLower = (t.name || '').toLowerCase();
+        let suffix = '';
+        if (nameLower.includes('karps')) suffix = 'Karps';
+        else if (nameLower.includes('madrid')) suffix = 'MAD';
+        else if (nameLower.includes('toronto')) suffix = 'Toronto';
+        else if (nameLower.includes('femenino') || nameLower.includes('gc') || nameLower.includes('sapphires')) suffix = 'Fem';
+        else if (nameLower.includes('academy') || nameLower.includes('academia')) suffix = 'Acad';
+
+        return suffix ? `${baseAcronym} (${suffix})` : baseAcronym;
+      });
+
+    const activeAcronyms = Array.from(new Set(acronymsRaw)).join(' + ');
 
     const calendarName = `KOI: ${activeAcronyms || 'Multi-Roster'} (${lang.toUpperCase()})`;
     const manager = new GoogleCalendarManager();
