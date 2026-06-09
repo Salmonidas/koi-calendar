@@ -52,26 +52,22 @@ export async function POST(request: Request) {
     const acronymsRaw = allDbTeams
       .filter((t: any) => sortedIds.includes(t.id.toString()))
       .map((t: any) => {
-        // 1. Obtener la sigla base del juego
-        const gameLower = (t.game || '').toLowerCase();
-        let baseAcronym = gameAcronyms[gameLower] || t.game || 'Unknown';
-
-        // 2. Si el equipo tiene una liga asignada dinámicamente, la priorizamos (ej: LEC, Superliga, TFT)
-        // ya que es mucho más específica y diferencial que simplemente "LOL"
+        // 1. Si el equipo tiene una liga asignada dinámicamente, la priorizamos (ej: LEC, Superliga, TFT, VCT)
         if (t.league) {
           return t.league;
         }
 
-        // 3. Fallback a la extracción manual de sufijos si no hay liga (legacy)
-        const nameLower = (t.name || '').toLowerCase();
-        let suffix = '';
-        if (nameLower.includes('karps')) suffix = 'Karps';
-        else if (nameLower.includes('madrid')) suffix = 'MAD';
-        else if (nameLower.includes('toronto')) suffix = 'Toronto';
-        else if (nameLower.includes('femenino') || nameLower.includes('gc') || nameLower.includes('sapphires')) suffix = 'Fem';
-        else if (nameLower.includes('academy') || nameLower.includes('academia')) suffix = 'Acad';
+        // 2. Si no hay liga, intentar extraer dinámicamente cualquier sufijo o palabra extra en el nombre del equipo
+        // Ej: "Movistar KOI Karps" -> extrae "Karps", "MAD Lions KOI Femenino" -> extrae "Femenino"
+        const cleanName = (t.name || '').replace(/movistar koi|mad lions koi|toronto koi|koi/ig, '').trim();
+        const extraName = cleanName.length > 0 ? cleanName : '';
 
-        return suffix ? `${baseAcronym} (${suffix})` : baseAcronym;
+        // 3. Obtener la sigla base del juego como fallback
+        const gameLower = (t.game || '').toLowerCase();
+        let baseAcronym = gameAcronyms[gameLower] || t.game || t.acronym || 'eSports';
+
+        // 4. Retornar de forma dinámica y genérica (ej: LOL (Karps) o simplemente CS2)
+        return extraName ? `${baseAcronym} (${extraName})` : baseAcronym;
       });
 
     const activeAcronyms = Array.from(new Set(acronymsRaw)).join(' + ');
